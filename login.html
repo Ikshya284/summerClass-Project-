@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <link rel="stylesheet" href="login.css">
+    <title>Food Management System Login</title>
+</head>
+<body>
+    <section class="whole-section">
+        <div class="container">
+            
+
+            <h2 class="logo">CookCraft</h2>
+            <h1>Welcome back!</h1>
+            <p>Cook. Save. Savor.</p>
+
+
+            <form class="login_form">
+                <div class="input-box">
+                    <input type="email" placeholder="Enter your email" required>
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            
+                <div class="input-box">
+                    <input type="password" placeholder="Enter your password" required>
+                    <i class="fa-solid fa-eye-slash"></i>
+                </div>
+
+                <div class="check-box">
+                    <div class="remember">
+                        <input type="checkbox">
+                        <label>Remember Me</label>
+                    </div>
+
+
+                    <a href="#">Forgot Password?</a>
+                </div>
+
+                <button  type="submit" class="login-btn">Login</button>
+                <div class="or">or</div><br>
+
+                <button type="button" class="google-btn">
+                <img src="Images/google.png" alt="Google" class="google-icon">
+                <span>Continue with Google</span>
+                </button>
+
+                <p class="signup-text">Don't have an account? <b><a href="#">Sign up</a></b></p>
+            </form>
+
+
+        </div>
+
+        <div class="image-section">
+            <video autoplay muted loop id="bg-video" class="video">
+                <source src="Images/vdo.mp4" type="video/mp4">
+            </video>
+        </div>
+
+        <script>
+            const video = document.getElementById("bg-video");
+            video.playbackRate = 0.25;
+        </script>
+
+    </section>
+
+
+</body>
+</html>
