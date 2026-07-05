@@ -201,3 +201,15 @@ button:hover{
     height: 100%;
     object-fit: cover;
 }
+
+.error-message{
+    color:red;
+    font-size:13px;
+    margin-top:5px;
+    display:block;
+    padding-left: 10px;
+}
+
+.input-error{
+    border: 2px solid red;
+}
