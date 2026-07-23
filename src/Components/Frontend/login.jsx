@@ -1,28 +1,29 @@
-import video from "../Images/vdo.mp4";
-import googleIcon from "../Images/google.png";
-import logo from "../Images/logo_img.png";
+import video from "../../Images/vdo.mp4";
+import googleIcon from "../../Images/google.png";
+import logo from "../../Images/logo_img.png";
+import foods from "../../Images/food.png";
 import { useEffect, useRef } from "react";
 
-function SignUpPage() {
+function LoginPage() {
 
-    const videoRef = useRef(null);
-    
-    useEffect(() => {
-      if (videoRef.current) {
-        videoRef.current.playbackRate = 0.25; // 25% speed
-      }
-    }, []);
+const videoRef = useRef(null);
+
+useEffect(() => {
+  if (videoRef.current) {
+    videoRef.current.playbackRate = 0.25; // 25% speed
+  }
+}, []);
 
   return (
-    <div className="flex h-screen bg-[#FBFBFD]">
+    <div className="flex min-h-screen bg-[#FBFBFD]">
 
       {/* Left Section */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center overflow-hidden py-3">
+      <div className="w-full lg:w-1/2 flex items-center justify-center overflow-y-auto py-8">
 
-        <div className="w-full max-w-lg px-10">
+        <div className="w-full max-w-xl px-10">
 
           {/* Logo */}
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-6">
             <img
               src={logo}
               alt="CookCraft Logo"
@@ -31,9 +32,9 @@ function SignUpPage() {
           </div>
 
           {/* Heading */}
-          <div className="text-center mb-5">
-            <h1 className="text-4xl font-bold text-black">
-              Create an account
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-bold text-black">
+              Welcome Back!
             </h1>
 
             <p className="text-gray-500 mt-2 text-lg">
@@ -42,21 +43,18 @@ function SignUpPage() {
           </div>
 
           {/* Form */}
-          <form className="space-y-4">
-
-            {/* Username */}
-            <input
-              type="text"
-              placeholder="Enter your username"
-              className="w-full h-14 rounded-full border-2 border-gray-300 px-6 outline-none focus:border-[#F38D39]"
-            />
+          <form className="space-y-5">
 
             {/* Email */}
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full h-14 rounded-full border-2 border-gray-300 px-6 outline-none focus:border-[#F38D39]"
-            />
+            <div className="relative">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full h-14 rounded-full border-2 border-gray-300 px-6 pr-14 outline-none focus:border-[#F38D39]"
+              />
+
+              <i className="fa-solid fa-user absolute right-6 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
 
             {/* Password */}
             <div className="relative">
@@ -69,49 +67,49 @@ function SignUpPage() {
               <i className="fa-solid fa-eye-slash absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"></i>
             </div>
 
-            {/* Confirm Password */}
-            <div className="relative">
-              <input
-                type="password"
-                placeholder="Confirm password"
-                className="w-full h-14 rounded-full border-2 border-gray-300 px-6 pr-14 outline-none focus:border-[#F38D39]"
-              />
+            {/* Remember & Forgot Password */}
+            <div className="flex items-center justify-between">
 
-              <i className="fa-solid fa-eye-slash absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"></i>
-            </div>
+              <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
 
-            {/* Terms */}
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                className="accent-[#F38D39] w-4 h-4"
-              />
+                <input
+                  type="checkbox"
+                  className="accent-[#F38D39] w-4 h-4"
+                />
 
-              <label className="text-[#F38D39] cursor-pointer hover:underline">
-                Accept Terms & Conditions
+                Remember Me
+
               </label>
+
+              <a
+                href="#"
+                className="text-[#F38D39] hover:underline"
+              >
+                Forgot Password?
+              </a>
+
             </div>
 
-            {/* Sign Up */}
+            {/* Login Button */}
             <button
               type="submit"
               className="w-full h-14 rounded-full bg-[#F38D39] text-white text-xl font-semibold hover:bg-[#E67820] transition duration-300 shadow-md"
             >
-              Sign Up
+              Login
             </button>
 
-            {/* OR */}
-            <div className="flex items-center gap-4 py-1">
-              <div className="flex-1 border-t border-gray-300"></div>
-
-              <span className="text-gray-500">
-                or
-              </span>
+            {/* Divider */}
+            <div className="flex items-center gap-4 py-2">
 
               <div className="flex-1 border-t border-gray-300"></div>
+
+              <span className="text-gray-500">or</span>
+
+              <div className="flex-1 border-t border-gray-300"></div>
+
             </div>
 
-            {/* Google Button */}
+            {/* Google Login */}
             <button
               type="button"
               className="w-full h-14 rounded-full border-2 border-gray-300 flex items-center justify-center gap-3 hover:bg-gray-100 transition"
@@ -123,24 +121,25 @@ function SignUpPage() {
               />
 
               <span className="font-medium">
-                Sign up using Google
+                Continue with Google
               </span>
             </button>
 
-            {/* Login */}
-            <p className="text-center text-gray-600 pt-1">
-              Already have an account?{" "}
+            {/* Sign Up */}
+            <p className="text-center text-gray-600 pt-2">
+              Don't have an account?{" "}
               <a
                 href="#"
                 className="font-semibold text-[#F38D39] hover:underline"
               >
-                Sign In
+                Sign Up
               </a>
             </p>
 
           </form>
 
         </div>
+
       </div>
 
       {/* Right Section */}
@@ -161,8 +160,8 @@ function SignUpPage() {
             />
         </div>
 
-    </div>
+</div>
   );
 }
 
-export default SignUpPage;
+export default LoginPage;

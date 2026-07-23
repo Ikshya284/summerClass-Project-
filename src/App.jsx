@@ -1,14 +1,16 @@
-import LoginPage from "./Components/login"
-import SignUpPage from "./Components/Signup"
-import Dashboard from "./Components/dashboard"
 
+
+import LoginPage from "./Components/Frontend/login";
+import SignUpPage from "./Components/Frontend/Signup";
+import landingPage from "./Components/Frontend/landingPage";
+import Home from "./Components/Frontend/Home";
 
 function App() {
  
 
   return (
     <div>
-      <Dashboard/>
+      <Home/>
     </div>
   )
 }
