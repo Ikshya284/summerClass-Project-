@@ -4,7 +4,7 @@ import logo from "../../Images/logo_img.png";
 import foods from "../../Images/food.png";
 
 
-export default function landingPage() {
+export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <nav className="sticky top-0 bg-[#FAF8F5]/90 backdrop-blur border-b border-orange-100">
