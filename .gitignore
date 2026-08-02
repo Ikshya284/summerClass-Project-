@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Unwanted File
-src/Components/Frontend/Categories.jsx
-src/Components/Frontend/RecipePage.jsx

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   MagnifyingGlass as Search,
   List as Menu,
@@ -25,6 +27,7 @@ import {
   Cookie,
   Martini as GlassWater,
   ForkKnife as ChefHat,
+  SignOut,
 } from "phosphor-react";
 
 /* ---------------------------------- Design tokens ---------------------------------- */
@@ -221,7 +224,14 @@ function Counter({ target, suffix, inView }) {
 
 /* ---------------------------------- Main component ---------------------------------- */
 export default function CookCraftHome() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  function handleLogout() {
+    logout();
+    navigate("/", { replace: true });
+  }
   const [scrolled, setScrolled] = useState(false);
   const [statsRef, statsInView] = useInView(0.3);
   const carouselRef = useRef(null);
@@ -306,17 +316,18 @@ export default function CookCraftHome() {
             >
               <Search size={18} color={COLORS.primaryDark} />
             </button>
-            <button
-              className="text-sm font-semibold px-4 py-2 rounded-full transition-colors duration-200"
+            <span
+              className="text-sm font-semibold hidden lg:inline"
               style={{ color: COLORS.dark, ...displayFont }}
             >
-              Login
-            </button>
+              Hi, {user?.name?.split(" ")[0] || "Chef"}
+            </span>
             <button
-              className="text-sm font-semibold px-5 py-2.5 rounded-full text-white shadow-sm transition-transform duration-200 hover:scale-105"
+              onClick={handleLogout}
+              className="text-sm font-semibold px-5 py-2.5 rounded-full text-white shadow-sm transition-transform duration-200 hover:scale-105 flex items-center gap-2"
               style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, ...displayFont }}
             >
-              Get Started
+              <SignOut size={16} weight="bold" /> Logout
             </button>
           </div>
 
@@ -333,14 +344,12 @@ export default function CookCraftHome() {
               </a>
             ))}
             <div className="flex gap-3 pt-2">
-              <button className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-full border" style={{ borderColor: COLORS.border, ...displayFont }}>
-                Login
-              </button>
               <button
-                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-full text-white"
+                onClick={handleLogout}
+                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-full text-white flex items-center justify-center gap-2"
                 style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, ...displayFont }}
               >
-                Get Started
+                <SignOut size={16} weight="bold" /> Logout
               </button>
             </div>
           </div>

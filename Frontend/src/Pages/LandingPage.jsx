@@ -1,10 +1,18 @@
-
-
-import logo from "../../Images/logo_img.png";
-import foods from "../../Images/food.png";
-
+import logo from "../Images/logo_img.png";
+import foods from "../Images/food.png";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth, roleHomePath } from "../context/AuthContext";
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  function handleAccountClick() {
+    // An already-authenticated user pressing "Login" is redirected
+    // straight to their role-based destination instead of the form.
+    navigate(isAuthenticated ? roleHomePath(user.role) : "/login");
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <nav className="sticky top-0 bg-[#FAF8F5]/90 backdrop-blur border-b border-orange-100">
@@ -16,18 +24,37 @@ export default function LandingPage() {
             ))}
           </ul>
           <div className="flex items-center gap-4">
-            <button className="bg-[#F38D39] text-white px-6 py-3 rounded-full hover:bg-[#e97c25] shadow">
-              Get Started
-            </button>
-            <div className="bg-white rounded-full px-3 py-2 shadow flex items-center gap-3">
+            {isAuthenticated ? (
+              <button
+                onClick={logout}
+                className="bg-[#F38D39] text-white px-6 py-3 rounded-full hover:bg-[#e97c25] shadow"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/register"
+                className="bg-[#F38D39] text-white px-6 py-3 rounded-full hover:bg-[#e97c25] shadow"
+              >
+                Get Started
+              </Link>
+            )}
+            <button
+              onClick={handleAccountClick}
+              className="bg-white rounded-full px-3 py-2 shadow flex items-center gap-3"
+            >
               <div className="w-10 h-10 rounded-full bg-[#F38D39] flex items-center justify-center text-white">
                 <i className="fa-regular fa-circle-user"></i>
               </div>
-              <div className="hidden md:block">
-                <p className="font-semibold text-sm">My Account</p>
-                <p className="text-xs text-gray-500">Login / Register</p>
+              <div className="hidden md:block text-left">
+                <p className="font-semibold text-sm">
+                  {isAuthenticated ? user.name : "My Account"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {isAuthenticated ? `Go to ${user.role === "admin" ? "Dashboard" : "Home"}` : "Login / Register"}
+                </p>
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </nav>

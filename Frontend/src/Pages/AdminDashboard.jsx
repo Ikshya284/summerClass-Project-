@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   MagnifyingGlass as Search,
   Bell,
@@ -284,9 +285,15 @@ function SectionHeading({ eyebrow, title, subtitle, action }) {
 /* ---------------------------------- Main component ---------------------------------- */
 export default function CookCraftDashboard() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [active, setActive] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statsRef, statsInView] = useInView(0.3);
+
+  function handleLogout() {
+    logout();
+    navigate("/", { replace: true });
+  }
 
   return (
     <div style={{ backgroundColor: COLORS.bg, ...bodyFont, color: COLORS.dark }} className="min-h-screen w-full overflow-x-hidden">
@@ -377,9 +384,17 @@ export default function CookCraftDashboard() {
                 />
               </div>
               <span style={{ ...displayFont, color: COLORS.dark }} className="hidden md:inline text-sm font-semibold">
-                Chef Admin
+                {user?.name || "Chef Admin"}
               </span>
             </div>
+            <button
+              aria-label="Logout"
+              onClick={handleLogout}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-110"
+              style={{ backgroundColor: COLORS.cream }}
+            >
+              <SignOut size={18} color={COLORS.primaryDark} />
+            </button>
           </div>
         </div>
       </header>
