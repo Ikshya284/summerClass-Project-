@@ -7,6 +7,8 @@ import { ROLES } from "../context/AuthContext";
  * - Not logged in at all -> Landing Page.
  * - Logged in but not an admin -> User Home (never shown the admin UI).
  */
+
+
 export default function AdminRoute({ children }) {
   const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
@@ -14,7 +16,7 @@ export default function AdminRoute({ children }) {
   if (loading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace state={{ from: location }} />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (user.role !== ROLES.ADMIN) {

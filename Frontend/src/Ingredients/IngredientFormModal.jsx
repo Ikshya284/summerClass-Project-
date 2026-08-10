@@ -1,18 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X } from "phosphor-react";
-import { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from "../utils/constants";
+import { INGREDIENT_UNITS } from "../utils/constants";
 import { COLORS, displayFont, bodyFont } from "../utils/theme";
 import { validateName, validateRequired } from "../utils/validators";
 
 const inputClass =
   "w-full h-12 rounded-2xl px-4 text-sm bg-white outline-none transition-colors duration-200 border focus:border-[#F38D39]";
 
-const emptyForm = { name: "", category: "", quantity: "", unit: "pcs", notes: "" };
+const emptyForm = { name: "", unit: "pcs" };
 
-/**
- * Shared Add/Edit ingredient form, rendered as a modal. Pass `ingredient`
- * to edit an existing one, or omit it to add a new one.
- */
 export default function IngredientFormModal({ open, ingredient, saving, onSubmit, onClose }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
@@ -23,10 +19,7 @@ export default function IngredientFormModal({ open, ingredient, saving, onSubmit
         ingredient
           ? {
               name: ingredient.name || "",
-              category: ingredient.category || "",
-              quantity: ingredient.quantity ?? "",
               unit: ingredient.unit || "pcs",
-              notes: ingredient.notes || "",
             }
           : emptyForm
       );
@@ -44,7 +37,7 @@ export default function IngredientFormModal({ open, ingredient, saving, onSubmit
   function validate() {
     const nextErrors = {
       name: validateName(form.name, "Ingredient name"),
-      category: validateRequired(form.category, "Category"),
+      unit: validateRequired(form.unit, "Unit of measurement"),
     };
     setErrors(nextErrors);
     return !Object.values(nextErrors).some(Boolean);
@@ -55,10 +48,7 @@ export default function IngredientFormModal({ open, ingredient, saving, onSubmit
     if (!validate()) return;
     onSubmit({
       name: form.name.trim(),
-      category: form.category,
-      quantity: form.quantity,
       unit: form.unit,
-      notes: form.notes.trim(),
     });
   }
 
@@ -87,7 +77,7 @@ export default function IngredientFormModal({ open, ingredient, saving, onSubmit
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-semibold mb-1.5" style={{ ...displayFont, color: COLORS.dark }}>
-              Name <span style={{ color: COLORS.roseText }}>*</span>
+              Ingredient Name <span style={{ color: COLORS.roseText }}>*</span>
             </label>
             <input
               value={form.name}
@@ -101,67 +91,19 @@ export default function IngredientFormModal({ open, ingredient, saving, onSubmit
 
           <div>
             <label className="block text-sm font-semibold mb-1.5" style={{ ...displayFont, color: COLORS.dark }}>
-              Category <span style={{ color: COLORS.roseText }}>*</span>
+              Unit of Measurement <span style={{ color: COLORS.roseText }}>*</span>
             </label>
             <select
-              value={form.category}
-              onChange={(e) => update("category", e.target.value)}
+              value={form.unit}
+              onChange={(e) => update("unit", e.target.value)}
               className={`${inputClass} appearance-none cursor-pointer`}
-              style={{ borderColor: errors.category ? COLORS.roseText : COLORS.border, color: form.category ? COLORS.dark : COLORS.secondary }}
+              style={{ borderColor: errors.unit ? COLORS.roseText : COLORS.border }}
             >
-              <option value="" disabled>Select category</option>
-              {INGREDIENT_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+              {INGREDIENT_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
               ))}
             </select>
-            {errors.category && <p className="text-xs mt-1" style={{ color: COLORS.roseText }}>{errors.category}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ ...displayFont, color: COLORS.dark }}>
-                Quantity
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                value={form.quantity}
-                onChange={(e) => update("quantity", e.target.value)}
-                placeholder="0"
-                className={inputClass}
-                style={{ borderColor: COLORS.border }}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ ...displayFont, color: COLORS.dark }}>
-                Unit
-              </label>
-              <select
-                value={form.unit}
-                onChange={(e) => update("unit", e.target.value)}
-                className={`${inputClass} appearance-none cursor-pointer`}
-                style={{ borderColor: COLORS.border }}
-              >
-                {INGREDIENT_UNITS.map((u) => (
-                  <option key={u} value={u}>{u}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-1.5" style={{ ...displayFont, color: COLORS.dark }}>
-              Notes
-            </label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => update("notes", e.target.value)}
-              rows={2}
-              placeholder="Optional notes (storage, supplier, etc.)"
-              className="w-full rounded-2xl px-4 py-3 text-sm bg-white outline-none border resize-none focus:border-[#F38D39] transition-colors duration-200"
-              style={{ borderColor: COLORS.border }}
-            />
+            {errors.unit && <p className="text-xs mt-1" style={{ color: COLORS.roseText }}>{errors.unit}</p>}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">

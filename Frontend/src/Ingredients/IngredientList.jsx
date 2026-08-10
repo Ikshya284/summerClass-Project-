@@ -6,7 +6,6 @@ import {
   PencilSimple as Edit,
   TrashSimple as Trash,
   Package,
-  CaretDown,
 } from "phosphor-react";
 import AdminHeader from "../Components/AdminHeader";
 import EmptyState from "../Components/EmptyState";
@@ -19,7 +18,6 @@ import {
   updateIngredient,
   deleteIngredient,
 } from "../services/ingredientService";
-import { INGREDIENT_CATEGORIES } from "../utils/constants";
 import { COLORS, displayFont, bodyFont } from "../utils/theme";
 import { formatDate } from "../utils/id";
 
@@ -29,7 +27,6 @@ export default function IngredientList() {
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
   const [page, setPage] = useState(1);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -42,7 +39,7 @@ export default function IngredientList() {
   async function loadIngredients() {
     setLoading(true);
     try {
-      const data = await getIngredients();
+      const data = await getIngredients({ search });
       setIngredients(data);
     } catch (err) {
       toast.error(err.message || "Could not load ingredients.");
@@ -53,20 +50,13 @@ export default function IngredientList() {
 
   useEffect(() => {
     loadIngredients();
-  }, []);
+  }, [search]);
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return ingredients.filter((i) => {
-      const matchesSearch = !term || i.name?.toLowerCase().includes(term);
-      const matchesCategory = category === "All" || i.category === category;
-      return matchesSearch && matchesCategory;
-    });
-  }, [ingredients, search, category]);
+  const filtered = ingredients;
 
   useEffect(() => {
     setPage(1);
-  }, [search, category]);
+  }, [search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -143,7 +133,6 @@ export default function IngredientList() {
           </button>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
             <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2" color={COLORS.secondary} />
@@ -155,21 +144,6 @@ export default function IngredientList() {
               style={{ borderColor: COLORS.border, backgroundColor: COLORS.card }}
               aria-label="Search ingredients"
             />
-          </div>
-          <div className="relative sm:w-56">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full h-12 rounded-2xl border pl-4 pr-10 text-sm outline-none appearance-none cursor-pointer focus:border-[#F38D39] transition-colors duration-200"
-              style={{ borderColor: COLORS.border, backgroundColor: COLORS.card, color: COLORS.dark }}
-              aria-label="Filter by category"
-            >
-              <option value="All">All Categories</option>
-              {INGREDIENT_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <CaretDown size={13} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" color={COLORS.secondary} />
           </div>
         </div>
 
@@ -194,30 +168,25 @@ export default function IngredientList() {
           <EmptyState
             Icon={Search}
             title="No matching ingredients"
-            subtitle="Try a different search term or category filter."
+            subtitle="Try a different search term."
             action={
               <button
-                onClick={() => {
-                  setSearch("");
-                  setCategory("All");
-                }}
+                onClick={() => setSearch("")}
                 className="px-6 py-2.5 rounded-full text-sm font-semibold border transition-colors duration-200"
                 style={{ borderColor: COLORS.border, color: COLORS.dark, ...displayFont }}
               >
-                Clear filters
+                Clear search
               </button>
             }
           />
         ) : (
           <>
-            {/* Desktop table */}
             <div className="hidden md:block rounded-3xl overflow-hidden shadow-sm" style={{ backgroundColor: COLORS.card, border: `1px solid ${COLORS.border}` }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ backgroundColor: COLORS.cream }}>
-                    <th className="text-left px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Ingredient</th>
-                    <th className="text-left px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Category</th>
-                    <th className="text-left px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Quantity</th>
+                    <th className="text-left px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Name</th>
+                    <th className="text-left px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Unit of Measurement</th>
                     <th className="text-left px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Added</th>
                     <th className="text-right px-6 py-4 font-semibold" style={{ ...displayFont, color: COLORS.dark }}>Actions</th>
                   </tr>
@@ -230,19 +199,13 @@ export default function IngredientList() {
                           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: COLORS.cream }}>
                             <Package size={18} color={COLORS.primaryDark} />
                           </div>
-                          <div>
-                            <span className="font-semibold block" style={{ ...displayFont, color: COLORS.dark }}>{i.name}</span>
-                            {i.notes && <span className="text-xs" style={{ color: COLORS.secondary }}>{i.notes}</span>}
-                          </div>
+                          <span className="font-semibold" style={{ ...displayFont, color: COLORS.dark }}>{i.name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ backgroundColor: COLORS.sage, color: COLORS.sageText, ...displayFont }}>
-                          {i.category}
+                          {i.unit}
                         </span>
-                      </td>
-                      <td className="px-6 py-4" style={{ color: COLORS.secondary }}>
-                        {i.quantity !== "" && i.quantity != null ? `${i.quantity} ${i.unit}` : "—"}
                       </td>
                       <td className="px-6 py-4" style={{ color: COLORS.secondary }}>{formatDate(i.createdAt)}</td>
                       <td className="px-6 py-4">
@@ -261,7 +224,6 @@ export default function IngredientList() {
               </table>
             </div>
 
-            {/* Mobile cards */}
             <div className="md:hidden flex flex-col gap-4">
               {pageItems.map((i) => (
                 <div key={i.id} className="rounded-3xl p-4 shadow-sm flex gap-4 items-start" style={{ backgroundColor: COLORS.card, border: `1px solid ${COLORS.border}` }}>
@@ -270,17 +232,10 @@ export default function IngredientList() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-sm mb-1 truncate" style={{ ...displayFont, color: COLORS.dark }}>{i.name}</h4>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: COLORS.sage, color: COLORS.sageText, ...displayFont }}>
-                        {i.category}
-                      </span>
-                      {i.quantity !== "" && i.quantity != null && (
-                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: COLORS.cream, color: COLORS.primaryDark, ...displayFont }}>
-                          {i.quantity} {i.unit}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: COLORS.sage, color: COLORS.sageText, ...displayFont }}>
+                      {i.unit}
+                    </span>
+                    <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => openEditForm(i)}
                         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"

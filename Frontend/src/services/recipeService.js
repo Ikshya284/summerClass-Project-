@@ -1,37 +1,84 @@
-  /**
-   * Recipe service layer.
-   *
-   * This is intentionally backend-agnostic: every function below returns a
-   * Promise, just like a real network call would. Right now they only touch
-   * local state / the console, but swapping the body of each function for a
-   * `fetch(...)` (or your API client of choice) is all that's needed to wire
-   * this up to a real backend later — no calling components need to change.
-   *
-   *   createRecipe -> POST   /api/recipes
-   *   getRecipes   -> GET    /api/recipes
-   *   updateRecipe -> PUT    /api/recipes/:id
-   *   deleteRecipe -> DELETE /api/recipes/:id
-   */
+import api from "./api";
+import { logActivity } from "./activityService";
 
-  export async function createRecipe(recipe) {
-    // TODO: replace with `await fetch("/api/recipes", { method: "POST", body: JSON.stringify(recipe) })`
-    console.log("[recipeService] createRecipe (local only):", recipe);
-    return { ...recipe, id: `local-${Date.now()}` };
+export async function getRecipes({ search = "", difficulty = "All", category = "All" } = {}) {
+  const params = {};
+  if (search.trim()) params.search = search.trim();
+  if (difficulty && difficulty !== "All") params.difficulty = difficulty;
+  if (category && category !== "All") params.category = category;
+
+  const { data } = await api.get("/recipes", { params });
+  return data;
+}
+
+export async function getRecipeById(id) {
+  const { data } = await api.get(`/recipes/${id}`);
+  return data;
+}
+
+export async function createRecipe(recipe, imageFile) {
+  const formData = buildRecipeFormData(recipe, imageFile);
+  const { data } = await api.post("/recipes", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  logActivity({
+    type: "recipe",
+    action: "create",
+    message: `Added new recipe "${data.title}"`,
+  });
+  return data;
+}
+
+export async function updateRecipe(id, recipe, imageFile) {
+  const formData = buildRecipeFormData(recipe, imageFile);
+  const { data } = await api.put(`/recipes/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  logActivity({
+    type: "recipe",
+    action: "update",
+    message: `Updated recipe "${data.title}"`,
+  });
+  return data;
+}
+
+export async function deleteRecipe(id) {
+  const existing = await getRecipeById(id).catch(() => null);
+  await api.delete(`/recipes/${id}`);
+  if (existing) {
+    logActivity({
+      type: "recipe",
+      action: "delete",
+      message: `Deleted recipe "${existing.title}"`,
+    });
+  }
+  return true;
+}
+
+function buildRecipeFormData(recipe, imageFile) {
+  const formData = new FormData();
+  formData.append("title", recipe.title);
+  formData.append("description", recipe.description);
+  formData.append("cuisine", recipe.cuisine || "");
+  formData.append("category", recipe.category);
+  formData.append("cookingTime", recipe.cookingTime);
+  formData.append("difficulty", recipe.difficulty);
+  formData.append("isPublished", recipe.isPublished !== false ? "true" : "false");
+
+  const ingredients = (recipe.ingredients || []).map((ing) => ({
+    ingredientId: ing.ingredientId || ing.id,
+    quantity: ing.quantity,
+  }));
+  formData.append("ingredients", JSON.stringify(ingredients));
+
+  const instructions = (recipe.instructions || []).map((step) => ({
+    description: step.description,
+  }));
+  formData.append("instructions", JSON.stringify(instructions));
+
+  if (imageFile) {
+    formData.append("image", imageFile);
   }
 
-  export async function getRecipes() {
-    // TODO: replace with `await fetch("/api/recipes")`
-    return [];
-  }
-
-  export async function updateRecipe(id, updates) {
-    // TODO: replace with `await fetch(`/api/recipes/${id}`, { method: "PUT", body: JSON.stringify(updates) })`
-    console.log("[recipeService] updateRecipe (local only):", id, updates);
-    return { id, ...updates };
-  }
-
-  export async function deleteRecipe(id) {
-    // TODO: replace with `await fetch(`/api/recipes/${id}`, { method: "DELETE" })`
-    console.log("[recipeService] deleteRecipe (local only):", id);
-    return true;
-  }
+  return formData;
+}

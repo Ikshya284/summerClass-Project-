@@ -2,6 +2,35 @@ import logo from "../Images/logo_img.png";
 import foods from "../Images/food.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth, roleHomePath } from "../context/AuthContext";
+import {
+  BookmarkSimple as Bookmark,
+  UploadSimple as Upload,
+  Funnel as FilterIcon,
+  Leaf,
+} from "phosphor-react";
+
+const FEATURES = [
+  {
+    Icon: Bookmark,
+    title: "Save Recipes",
+    desc: "Bookmark your favorite dishes and build a personal cookbook you can revisit anytime.",
+  },
+  {
+    Icon: Upload,
+    title: "Upload Your Own Recipes",
+    desc: "Share your family classics and original creations with a community of home cooks.",
+  },
+  {
+    Icon: Leaf,
+    title: "Smart Ingredient Management",
+    desc: "Track what's in your pantry and get recipe matches based on what you already have.",
+  },
+  {
+    Icon: FilterIcon,
+    title: "Fast Search & Filtering",
+    desc: "Find the perfect recipe in seconds with filters for time, difficulty, and diet.",
+  },
+];
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -19,7 +48,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
           <img src={logo} alt="CookCraft" className="w-28" />
           <ul className="hidden lg:flex gap-10 font-medium text-gray-800">
-            {["Home","Recipes","Categories","About","Contact"].map(i=>(
+            {["Home","Recipes","About"].map(i=>(
               <li key={i} className="hover:text-[#F38D39] cursor-pointer">{i}</li>
             ))}
           </ul>
@@ -86,93 +115,32 @@ export default function LandingPage() {
         </div>
       </section>
 
-<section className="max-w-7xl mx-auto px-8 py-20">
+      {/* ---------------- Why Choose CookCraft ---------------- */}
+      <section id="why-choose" className="max-w-7xl mx-auto px-5 md:px-8 py-16 md:py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3 text-[#2D2D2D]">
+            Why Choose CookCraft
+          </h2>
+          <p className="max-w-xl mx-auto text-gray-500">
+            Everything you need to plan, cook, and share great food.
+          </p>
+        </div>
 
-  <div className="text-center">
-    <h2 className="text-4xl font-bold">
-      Admin <span className="text-[#F38D39]">Dashboard</span>
-    </h2>
-
-    <p className="text-gray-500 mt-4 text-lg">
-      Manage your recipes, categories, and users efficiently from one place.
-    </p>
-  </div>
-
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-14">
-
-    {/* Card 1 */}
-    <div className="bg-white rounded-3xl p-8 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-
-      <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
-        <i className="fa-solid fa-utensils text-3xl text-[#F38D39]"></i>
-      </div>
-
-      <h3 className="text-2xl font-bold mt-6">
-        Manage Recipes
-      </h3>
-
-      <p className="text-gray-500 mt-3 leading-7">
-        Add, edit, delete, and organize recipes with ease.
-      </p>
-
-    </div>
-
-    {/* Card 2 */}
-    <div className="bg-white rounded-3xl p-8 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-
-      <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
-        <i className="fa-solid fa-layer-group text-3xl text-[#F38D39]"></i>
-      </div>
-
-      <h3 className="text-2xl font-bold mt-6">
-        Categories
-      </h3>
-
-      <p className="text-gray-500 mt-3 leading-7">
-        Create and organize recipe categories for better navigation.
-      </p>
-
-    </div>
-
-    {/* Card 3 */}
-    <div className="bg-white rounded-3xl p-8 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-
-      <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
-        <i className="fa-solid fa-users text-3xl text-[#F38D39]"></i>
-      </div>
-
-      <h3 className="text-2xl font-bold mt-6">
-        Manage Users
-      </h3>
-
-      <p className="text-gray-500 mt-3 leading-7">
-        View registered users and monitor their activity.
-      </p>
-
-    </div>
-
-    {/* Card 4 */}
-    <div className="bg-white rounded-3xl p-8 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-
-      <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
-        <i className="fa-solid fa-chart-line text-3xl text-[#F38D39]"></i>
-      </div>
-
-      <h3 className="text-2xl font-bold mt-6">
-        Dashboard Insights
-      </h3>
-
-      <p className="text-gray-500 mt-3 leading-7">
-        Monitor recipes, categories, and user activity through the dashboard.
-      </p>
-
-    </div>
-
-  </div>
-
-</section>
-
-
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {FEATURES.map(({ Icon, title, desc }) => (
+            <div
+              key={title}
+              className="rounded-3xl p-7 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-[#F3E8D9] bg-white/70 backdrop-blur-[6px]"
+            >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 bg-gradient-to-br from-[#F38D39] to-[#D96F1B]">
+                <Icon size={22} color="#fff" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2 text-[#2D2D2D]">{title}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

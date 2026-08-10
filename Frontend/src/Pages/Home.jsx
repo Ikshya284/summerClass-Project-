@@ -1,17 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { getRecipes } from "../services/recipeService";
+import Navbar from "../Components/Navbar";
 import {
-  MagnifyingGlass as Search,
-  List as Menu,
-  X,
   Clock,
   Star,
-  BookmarkSimple as Bookmark,
-  UploadSimple as Upload,
-  Funnel as FilterIcon,
-  Leaf,
-  ArrowRight,
+  Plus,
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
   FacebookLogo as Facebook,
@@ -26,9 +20,15 @@ import {
   CookingPot as Soup,
   Cookie,
   Martini as GlassWater,
-  ForkKnife as ChefHat,
-  SignOut,
 } from "phosphor-react";
+
+// NOTE: update this path to point at wherever your hero video asset actually lives.
+import heroDishVideo from "../Images/heroDish.mp4";
+
+// Brand logo. Place logo.png next to this file (or update the path to match your assets folder).
+import logo from "../Images/logo_img.png";
+
+
 
 /* ---------------------------------- Design tokens ---------------------------------- */
 const COLORS = {
@@ -50,16 +50,9 @@ const displayFont = { fontFamily: "'Poppins', sans-serif" };
 const bodyFont = { fontFamily: "'Inter', sans-serif" };
 
 /* ---------------------------------- Data ---------------------------------- */
-const NAV_LINKS = ["Home", "Recipes", "Categories", "Ingredients", "About", "Contact"];
+const NAV_LINKS = ["Home", "Recipes",  "About"];
 
-const CATEGORIES = [
-  { name: "Breakfast", count: 84, Icon: Coffee, tint: COLORS.cream, iconColor: COLORS.primary },
-  { name: "Lunch", count: 112, Icon: Sandwich, tint: COLORS.sage, iconColor: COLORS.sageText },
-  { name: "Dinner", count: 96, Icon: Soup, tint: COLORS.clay, iconColor: COLORS.clayText },
-  { name: "Desserts", count: 73, Icon: Cookie, tint: COLORS.cream, iconColor: COLORS.primary },
-  { name: "Drinks", count: 58, Icon: GlassWater, tint: COLORS.sage, iconColor: COLORS.sageText },
-  { name: "Healthy Meals", count: 67, Icon: Leaf, tint: COLORS.clay, iconColor: COLORS.clayText },
-];
+
 
 const FEATURED_RECIPES = [
   {
@@ -121,42 +114,11 @@ const LATEST_RECIPES = [
   { name: "Chocolate Lava Cake", time: "28 min", img: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=600&q=80&auto=format&fit=crop" },
 ];
 
-const FEATURES = [
-  {
-    Icon: Bookmark,
-    title: "Save Recipes",
-    desc: "Bookmark your favorite dishes and build a personal cookbook you can revisit anytime.",
-  },
-  {
-    Icon: Upload,
-    title: "Upload Your Own Recipes",
-    desc: "Share your family classics and original creations with a community of home cooks.",
-  },
-  {
-    Icon: Leaf,
-    title: "Smart Ingredient Management",
-    desc: "Track what's in your pantry and get recipe matches based on what you already have.",
-  },
-  {
-    Icon: FilterIcon,
-    title: "Fast Search & Filtering",
-    desc: "Find the perfect recipe in seconds with filters for time, difficulty, and diet.",
-  },
-];
-
 const STATS = [
   { label: "Recipes", value: 500, suffix: "+" },
-  { label: "Categories", value: 100, suffix: "+" },
+
   { label: "Ingredients", value: 1000, suffix: "+" },
   { label: "Happy Users", value: 5000, suffix: "+" },
-];
-
-const FLOATING_INGREDIENTS = [
-  { label: "Tomato", emoji: "🍅", top: "6%", left: "-6%", delay: "0s" },
-  { label: "Basil", emoji: "🌿", top: "62%", left: "-10%", delay: "0.6s" },
-  { label: "Garlic", emoji: "🧄", top: "80%", left: "58%", delay: "1.2s" },
-  { label: "Cheese", emoji: "🧀", top: "2%", left: "62%", delay: "0.3s" },
-  { label: "Herbs", emoji: "🌱", top: "38%", left: "84%", delay: "0.9s" },
 ];
 
 /* ---------------------------------- Small helpers ---------------------------------- */
@@ -225,14 +187,10 @@ function Counter({ target, suffix, inView }) {
 /* ---------------------------------- Main component ---------------------------------- */
 export default function CookCraftHome() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [featuredRecipes, setFeaturedRecipes] = useState(
+    FEATURED_RECIPES.map((recipe, index) => ({ ...recipe, id: index + 1 }))
+  );
 
-  function handleLogout() {
-    logout();
-    navigate("/", { replace: true });
-  }
-  const [scrolled, setScrolled] = useState(false);
   const [statsRef, statsInView] = useInView(0.3);
   const carouselRef = useRef(null);
   const [email, setEmail] = useState("");
@@ -242,6 +200,39 @@ export default function CookCraftHome() {
     const onScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Land on the right section when arriving via a Navbar link (e.g. /home#featured-recipes).
+  useEffect(() => {
+    if (window.location.hash) {
+      document.querySelector(window.location.hash)?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getRecipes({ search: "", difficulty: "All", category: "All" })
+      .then((recipes) => {
+        if (cancelled) return;
+        if (Array.isArray(recipes) && recipes.length) {
+          setFeaturedRecipes(
+            recipes.slice(0, 6).map((recipe, index) => ({
+              id: recipe.id ?? index + 1,
+              name: recipe.title,
+              category: recipe.category,
+              time: recipe.cookingTime,
+              difficulty: recipe.difficulty,
+              rating: 4.8,
+              img: recipe.imageUrl || recipe.images?.[0]?.url || FEATURED_RECIPES[index % FEATURED_RECIPES.length].img,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const scrollCarousel = useCallback((dir) => {
@@ -275,86 +266,7 @@ export default function CookCraftHome() {
         }
       `}</style>
 
-      {/* ---------------- Navbar ---------------- */}
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "shadow-md" : ""}`}
-        style={{ backgroundColor: "rgba(250,248,245,0.9)", backdropFilter: "blur(10px)", borderBottom: `1px solid ${COLORS.border}` }}
-      >
-        <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center justify-between h-18 py-3">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
-              style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}
-            >
-              <ChefHat size={22} color="#fff" />
-            </div>
-            <span style={{ ...displayFont, color: COLORS.dark }} className="text-xl font-bold tracking-tight">
-              CookCraft
-            </span>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="text-sm font-medium transition-colors duration-200"
-                style={{ color: COLORS.secondary, ...displayFont }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = COLORS.primary)}
-                onMouseLeave={(e) => (e.currentTarget.style.color = COLORS.secondary)}
-              >
-                {link}
-              </a>
-            ))}
-          </nav>
-
-          <div className="hidden md:flex items-center gap-4">
-            <button
-              aria-label="Search"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-110"
-              style={{ backgroundColor: COLORS.cream }}
-            >
-              <Search size={18} color={COLORS.primaryDark} />
-            </button>
-            <span
-              className="text-sm font-semibold hidden lg:inline"
-              style={{ color: COLORS.dark, ...displayFont }}
-            >
-              Hi, {user?.name?.split(" ")[0] || "Chef"}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="text-sm font-semibold px-5 py-2.5 rounded-full text-white shadow-sm transition-transform duration-200 hover:scale-105 flex items-center gap-2"
-              style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, ...displayFont }}
-            >
-              <SignOut size={16} weight="bold" /> Logout
-            </button>
-          </div>
-
-          <button className="md:hidden" onClick={() => setMenuOpen((v) => !v)} aria-label="Toggle menu">
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-
-        {menuOpen && (
-          <div className="md:hidden px-5 pb-5 flex flex-col gap-4 fade-up" style={{ borderTop: `1px solid ${COLORS.border}` }}>
-            {NAV_LINKS.map((link) => (
-              <a key={link} href="#" className="text-sm font-medium pt-3" style={{ color: COLORS.dark, ...displayFont }}>
-                {link}
-              </a>
-            ))}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleLogout}
-                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-full text-white flex items-center justify-center gap-2"
-                style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, ...displayFont }}
-              >
-                <SignOut size={16} weight="bold" /> Logout
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
+      <Navbar />
 
       {/* ---------------- Hero ---------------- */}
       <section className="relative max-w-7xl mx-auto px-5 md:px-8 pt-16 pb-24 md:pt-24 md:pb-32 grid md:grid-cols-2 gap-14 items-center overflow-hidden">
@@ -385,85 +297,37 @@ export default function CookCraftHome() {
           </p>
           <div className="flex flex-wrap gap-4">
             <button
-              className="px-7 py-3.5 rounded-full text-white font-semibold shadow-md transition-transform duration-200 hover:scale-105 flex items-center gap-2"
+              className="px-6 py-3 rounded-full text-white text-sm font-semibold shadow-md transition-transform duration-200 hover:scale-105 flex items-center gap-2"
               style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, ...displayFont }}
+              onClick={() => navigate("/recipes")}
             >
-              Explore Recipes <ArrowRight size={18} />
-            </button>
-            <button
-              className="px-7 py-3.5 rounded-full font-semibold border transition-transform duration-200 hover:scale-105"
-              style={{ borderColor: COLORS.border, color: COLORS.dark, backgroundColor: COLORS.card, ...displayFont }}
-            >
-              Add Recipe
+              Explore Recipes
             </button>
           </div>
         </div>
 
         <div className="relative z-10 flex items-center justify-center h-[380px] md:h-[460px]">
+          <div className="spin-slow absolute rounded-full" style={{ width: 320, height: 320 }} />
           <div
-            className="spin-slow absolute rounded-full"
-            style={{ width: 320, height: 320, border: `2px dashed ${COLORS.border}` }}
-          />
-          <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden shadow-xl border-8" style={{ borderColor: COLORS.card }}>
-            <img
-              src="https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80&auto=format&fit=crop"
-              alt="Featured dish of the day"
+            className="w-64 h-64 md:w-[28rem] md:h-[28rem] rounded-full overflow-hidden shadow-xl border-8"
+            style={{ borderColor: COLORS.card }}
+          >
+            <video
+              src={heroDishVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
               className="w-full h-full object-cover"
+              aria-label="Featured dish of the day"
             />
           </div>
-
-          {FLOATING_INGREDIENTS.map((ing, i) => (
-            <div
-              key={ing.label}
-              className={`absolute ${i % 2 === 0 ? "float-a" : "float-b"} hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl shadow-lg`}
-              style={{ top: ing.top, left: ing.left, backgroundColor: COLORS.card, animationDelay: ing.delay }}
-            >
-              <span className="text-lg">{ing.emoji}</span>
-              <span className="text-xs font-semibold" style={{ color: COLORS.dark, ...displayFont }}>
-                {ing.label}
-              </span>
-            </div>
-          ))}
         </div>
       </section>
 
-      {/* ---------------- Categories ---------------- */}
-      <section className="max-w-7xl mx-auto px-5 md:px-8 py-16 md:py-20">
-        <div className="text-center mb-12">
-          <h2 style={{ ...displayFont, color: COLORS.dark }} className="text-3xl md:text-4xl font-bold mb-3">
-            Recipe Categories
-          </h2>
-          <p style={{ color: COLORS.secondary }} className="max-w-xl mx-auto">
-            Find exactly what you're craving, organized the way you cook.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-          {CATEGORIES.map(({ name, count, Icon, tint, iconColor }) => (
-            <div
-              key={name}
-              className="rounded-3xl p-6 text-center shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1"
-              style={{ backgroundColor: COLORS.card, border: `1px solid ${COLORS.border}` }}
-            >
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-transform duration-300"
-                style={{ backgroundColor: tint }}
-              >
-                <Icon size={26} color={iconColor} />
-              </div>
-              <h3 style={{ ...displayFont, color: COLORS.dark }} className="font-semibold text-sm md:text-base mb-1">
-                {name}
-              </h3>
-              <p style={{ color: COLORS.secondary }} className="text-xs">
-                {count} recipes
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ---------------- Featured Recipes ---------------- */}
-      <section className="py-16 md:py-20" style={{ backgroundColor: "#FFFFFF" }}>
+      <section id="featured-recipes" className="py-16 md:py-20" style={{ backgroundColor: "#FFFFFF" }}>
         <div className="max-w-7xl mx-auto px-5 md:px-8">
           <div className="text-center mb-12">
             <h2 style={{ ...displayFont, color: COLORS.dark }} className="text-3xl md:text-4xl font-bold mb-3">
@@ -475,9 +339,9 @@ export default function CookCraftHome() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
-            {FEATURED_RECIPES.map((r) => (
+            {featuredRecipes.map((r) => (
               <div
-                key={r.name}
+                key={r.id}
                 className="rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group hover:-translate-y-1"
                 style={{ backgroundColor: COLORS.bg, border: `1px solid ${COLORS.border}` }}
               >
@@ -508,6 +372,7 @@ export default function CookCraftHome() {
                     </span>
                   </div>
                   <button
+                    onClick={() => navigate(`/recipes/${r.id}`)}
                     className="w-full py-2.5 rounded-full text-sm font-semibold text-white transition-transform duration-200 hover:scale-105"
                     style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`, ...displayFont }}
                   >
@@ -520,172 +385,12 @@ export default function CookCraftHome() {
         </div>
       </section>
 
-      {/* ---------------- Why Choose CookCraft ---------------- */}
-      <section className="max-w-7xl mx-auto px-5 md:px-8 py-16 md:py-20">
-        <div className="text-center mb-12">
-          <h2 style={{ ...displayFont, color: COLORS.dark }} className="text-3xl md:text-4xl font-bold mb-3">
-            Why Choose CookCraft
-          </h2>
-          <p style={{ color: COLORS.secondary }} className="max-w-xl mx-auto">
-            Everything you need to plan, cook, and share great food.
-          </p>
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {FEATURES.map(({ Icon, title, desc }) => (
-            <div
-              key={title}
-              className="rounded-3xl p-7 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.7)",
-                backdropFilter: "blur(6px)",
-                border: `1px solid ${COLORS.border}`,
-              }}
-            >
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
-                style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}
-              >
-                <Icon size={22} color="#fff" />
-              </div>
-              <h3 style={{ ...displayFont, color: COLORS.dark }} className="font-semibold text-lg mb-2">
-                {title}
-              </h3>
-              <p style={{ color: COLORS.secondary }} className="text-sm leading-relaxed">
-                {desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- Statistics ---------------- */}
-      <section
-        ref={statsRef}
-        className="py-16 md:py-20"
-        style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}0D, ${COLORS.sage}80)` }}
-      >
-        <div className="max-w-7xl mx-auto px-5 md:px-8 grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-          {STATS.map((s) => (
-            <div key={s.label}>
-              <Counter target={s.value} suffix={s.suffix} inView={statsInView} />
-              <p style={{ color: COLORS.secondary, ...displayFont }} className="mt-2 text-sm font-medium">
-                {s.label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- Latest Recipes Carousel ---------------- */}
-      <section className="py-16 md:py-20" style={{ backgroundColor: "#FFFFFF" }}>
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
-            <div>
-              <h2 style={{ ...displayFont, color: COLORS.dark }} className="text-3xl md:text-4xl font-bold mb-2">
-                Latest Recipes
-              </h2>
-              <p style={{ color: COLORS.secondary }}>Fresh off the CookCraft community.</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => scrollCarousel(-1)}
-                aria-label="Scroll left"
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-sm transition-transform duration-200 hover:scale-110"
-                style={{ backgroundColor: COLORS.cream }}
-              >
-                <ChevronLeft size={18} color={COLORS.primaryDark} />
-              </button>
-              <button
-                onClick={() => scrollCarousel(1)}
-                aria-label="Scroll right"
-                className="w-11 h-11 rounded-full flex items-center justify-center shadow-sm transition-transform duration-200 hover:scale-110"
-                style={{ backgroundColor: COLORS.cream }}
-              >
-                <ChevronRight size={18} color={COLORS.primaryDark} />
-              </button>
-            </div>
-          </div>
-
-          <div ref={carouselRef} className="flex gap-6 overflow-x-auto hide-scrollbar pb-2 scroll-smooth">
-            {LATEST_RECIPES.map((r) => (
-              <div
-                key={r.name}
-                className="flex-none w-64 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group"
-                style={{ border: `1px solid ${COLORS.border}` }}
-              >
-                <div className="h-40 overflow-hidden">
-                  <img src={r.img} alt={r.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                </div>
-                <div className="p-4" style={{ backgroundColor: COLORS.bg }}>
-                  <h3 style={{ ...displayFont, color: COLORS.dark }} className="font-semibold text-sm mb-1">
-                    {r.name}
-                  </h3>
-                  <span className="flex items-center gap-1 text-xs" style={{ color: COLORS.secondary }}>
-                    <Clock size={13} /> {r.time}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- Newsletter ---------------- */}
-      <section className="px-5 md:px-8 py-16 md:py-20">
-        <div
-          className="max-w-5xl mx-auto rounded-[28px] px-8 py-14 md:py-16 text-center shadow-md relative overflow-hidden"
-          style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}
-        >
-          <div className="blob absolute rounded-full opacity-20 pointer-events-none" style={{ width: 220, height: 220, backgroundColor: "#fff", top: "-60px", right: "-40px" }} />
-          <h2 style={{ ...displayFont }} className="text-3xl md:text-4xl font-bold text-white mb-3 relative z-10">
-            Never Miss a Recipe!
-          </h2>
-          <p className="text-white/90 max-w-md mx-auto mb-8 relative z-10">
-            Subscribe for weekly recipe drops, cooking tips, and seasonal favorites.
-          </p>
-          {subscribed ? (
-            <p className="text-white font-semibold relative z-10">Thanks for subscribing — welcome aboard! 🎉</p>
-          ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (email.trim()) setSubscribed(true);
-              }}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto relative z-10"
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="flex-1 px-5 py-3.5 rounded-full outline-none text-sm"
-                style={{ ...bodyFont }}
-              />
-              <button
-                type="submit"
-                className="px-6 py-3.5 rounded-full font-semibold text-sm transition-transform duration-200 hover:scale-105"
-                style={{ backgroundColor: COLORS.dark, color: "#fff", ...displayFont }}
-              >
-                Subscribe
-              </button>
-            </form>
-          )}
-        </div>
-      </section>
-
       {/* ---------------- Footer ---------------- */}
       <footer style={{ backgroundColor: COLORS.dark }} className="pt-16 pb-8 px-5 md:px-8">
         <div className="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-12" style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}
-              >
-                <ChefHat size={18} color="#fff" />
-              </div>
+              <img src={logo} alt="CookCraft logo" className="h-9 w-auto object-contain" />
               <span style={{ ...displayFont }} className="text-lg font-bold text-white">
                 CookCraft
               </span>
@@ -720,37 +425,9 @@ export default function CookCraftHome() {
             </ul>
           </div>
 
-          <div>
-            <h4 style={{ ...displayFont }} className="text-white font-semibold mb-4 text-sm tracking-wide">
-              Categories
-            </h4>
-            <ul className="space-y-3">
-              {CATEGORIES.slice(0, 5).map((c) => (
-                <li key={c.name}>
-                  <a href="#" className="text-sm text-white/60 hover:text-white transition-colors duration-200">
-                    {c.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
 
-          <div>
-            <h4 style={{ ...displayFont }} className="text-white font-semibold mb-4 text-sm tracking-wide">
-              Contact
-            </h4>
-            <ul className="space-y-3 text-sm text-white/60">
-              <li className="flex items-center gap-2">
-                <Mail size={15} /> hello@cookcraft.app
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone size={15} /> +1 (555) 012-3456
-              </li>
-              <li className="flex items-center gap-2">
-                <MapPin size={15} /> Kathmandu, Nepal
-              </li>
-            </ul>
-          </div>
+
+
         </div>
 
         <p className="text-center text-xs text-white/40 pt-6">© {new Date().getFullYear()} CookCraft. All rights reserved.</p>

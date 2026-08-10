@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import AdminHeader from "../Components/AdminHeader";
+import api from "../services/api";
+import { getRecipes } from "../services/recipeService";
+import { formatDate } from "../utils/id";
+import foodPlaceholder from "../Images/food.png";
 import {
-  MagnifyingGlass as Search,
-  Bell,
-  List as Menu,
-  X,
   Clock,
   Star,
   DotsThreeVertical as DotsVertical,
@@ -15,7 +15,6 @@ import {
   Coffee,
   Hamburger as Sandwich,
   Cookie,
-  ForkKnife as ChefHat,
   Plus,
   FolderSimplePlus as FolderPlus,
   UsersThree as Users,
@@ -23,12 +22,12 @@ import {
   SquaresFour as Grid,
   BookOpen,
   Gear as Settings,
-  SignOut,
   Trophy,
   Eye,
   BookmarkSimple as Bookmark,
   UserCircle,
 } from "phosphor-react";
+import heroDishVideo from "../Images/heroDish.mp4";
 
 /* ---------------------------------- Design tokens (shared with homepage) ---------------------------------- */
 const COLORS = {
@@ -52,13 +51,10 @@ const displayFont = { fontFamily: "'Poppins', sans-serif" };
 const bodyFont = { fontFamily: "'Inter', sans-serif" };
 
 /* ---------------------------------- Data ---------------------------------- */
-const TOP_NAV = ["Dashboard", "Recipes", "Categories", "Users"];
-
-const STATS = [
+const STATS_TEMPLATE = [
   {
     label: "Total Recipes",
-    value: 512,
-  
+    value: 0,
     Icon: BookOpen,
     tint: COLORS.cream,
     iconColor: COLORS.primary,
@@ -67,25 +63,17 @@ const STATS = [
   },
   {
     label: "Registered Users",
-    value: 5240,
+    value: 0,
     Icon: Users,
     tint: COLORS.sage,
     iconColor: COLORS.sageText,
     spark: [3, 4, 6, 5, 7, 10, 11],
     sparkColor: COLORS.sageText,
   },
-  {
-    label: "Categories",
-    value: 108,
-    Icon: FolderPlus,
-    tint: COLORS.clay,
-    iconColor: COLORS.clayText,
-    spark: [6, 6, 7, 6, 8, 8, 9],
-    sparkColor: COLORS.clayText,
-  },
+
   {
     label: "Average Rating",
-    value: 4.8,
+    value: 0,
     Icon: Star,
     tint: COLORS.rose,
     iconColor: COLORS.roseText,
@@ -102,58 +90,13 @@ const QUICK_ACTIONS = [
   { label: "Featured Recipes", desc: "Curate what appears on the homepage", Icon: Star },
 ];
 
-const LATEST_RECIPES = [
-  {
-    name: "Golden Avocado Toast",
-    author: "Emily Carter",
-    category: "Breakfast",
-    status: "Published",
-    rating: 4.8,
-    date: "Jul 21, 2026",
-    img: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=200&q=80&auto=format&fit=crop",
-  },
-  {
-    name: "Rustic Garlic Pasta",
-    author: "Alex Moreno",
-    category: "Dinner",
-    status: "Published",
-    rating: 4.9,
-    date: "Jul 20, 2026",
-    img: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=200&q=80&auto=format&fit=crop",
-  },
-  {
-    name: "Smoky Beef Burger",
-    author: "Priya Shah",
-    category: "Lunch",
-    status: "Draft",
-    rating: 4.6,
-    date: "Jul 19, 2026",
-    img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80&auto=format&fit=crop",
-  },
-  {
-    name: "Berry Yogurt Parfait",
-    author: "Noah Kim",
-    category: "Desserts",
-    status: "Published",
-    rating: 4.7,
-    date: "Jul 18, 2026",
-    img: "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&q=80&auto=format&fit=crop",
-  },
-];
-
 const STATUS_STYLES = {
   Published: { bg: COLORS.sage, color: COLORS.sageText },
   Draft: { bg: COLORS.cream, color: COLORS.primaryDark },
   Pending: { bg: COLORS.rose, color: COLORS.roseText },
 };
 
-const CATEGORIES_PROGRESS = [
-  { name: "Breakfast", count: 84, pct: 74, Icon: Coffee, tint: COLORS.cream, iconColor: COLORS.primary },
-  { name: "Lunch", count: 112, pct: 88, Icon: Sandwich, tint: COLORS.sage, iconColor: COLORS.sageText },
-  { name: "Dinner", count: 96, pct: 80, Icon: Soup, tint: COLORS.clay, iconColor: COLORS.clayText },
-  { name: "Desserts", count: 73, pct: 62, Icon: Cookie, tint: COLORS.rose, iconColor: COLORS.roseText },
-  { name: "Healthy", count: 67, pct: 55, Icon: Leaf, tint: COLORS.sage, iconColor: COLORS.sageText },
-];
+
 
 const MOST_VIEWED = [
   { name: "Classic Margherita Pizza", value: "12.4k views" },
@@ -179,13 +122,6 @@ const MOST_ACTIVE_USERS = [
   { name: "Priya Shah", value: "16 recipes" },
 ];
 
-const FLOATING_INGREDIENTS = [
-  { emoji: "🍅", top: "10%", left: "2%", delay: "0s" },
-  { emoji: "🌿", top: "68%", left: "-2%", delay: "0.6s" },
-  { emoji: "🧄", top: "78%", left: "62%", delay: "1.2s" },
-  { emoji: "🧀", top: "4%", left: "70%", delay: "0.3s" },
-];
-
 /* ---------------------------------- Helpers ---------------------------------- */
 function useInView(threshold = 0.3) {
   const ref = useRef(null);
@@ -209,9 +145,12 @@ function useInView(threshold = 0.3) {
 }
 
 function Counter({ target, inView, isDecimal }) {
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(target);
+
   useEffect(() => {
+    setValue(target);
     if (!inView) return;
+
     let start = null;
     const duration = 1400;
     const step = (timestamp) => {
@@ -222,8 +161,10 @@ function Counter({ target, inView, isDecimal }) {
       if (progress < 1) requestAnimationFrame(step);
       else setValue(target);
     };
+
     requestAnimationFrame(step);
   }, [inView, target]);
+
   return (
     <span style={{ ...displayFont, color: COLORS.dark }} className="text-3xl md:text-4xl font-bold">
       {isDecimal ? value.toFixed(1) : Math.floor(value).toLocaleString()}
@@ -285,15 +226,62 @@ function SectionHeading({ eyebrow, title, subtitle, action }) {
 /* ---------------------------------- Main component ---------------------------------- */
 export default function CookCraftDashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [active, setActive] = useState("Dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statsRef, statsInView] = useInView(0.3);
+  const [stats, setStats] = useState(STATS_TEMPLATE);
+  const [latestRecipes, setLatestRecipes] = useState([]);
 
-  function handleLogout() {
-    logout();
-    navigate("/", { replace: true });
-  }
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLatestRecipes() {
+      try {
+        const data = await getRecipes();
+        if (cancelled) return;
+
+        const sorted = [...data].sort(
+          (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        );
+        setLatestRecipes(sorted.slice(0, 4));
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to load latest recipes", error);
+        }
+      }
+    }
+
+    loadLatestRecipes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStats() {
+      try {
+        const { data } = await api.get("/auth/stats");
+        if (cancelled) return;
+
+        setStats([
+          { ...STATS_TEMPLATE[0], value: Number(data.totalRecipes || 0) },
+          { ...STATS_TEMPLATE[1], value: Number(data.totalUsers || 0) },
+          { ...STATS_TEMPLATE[2], value: Number(data.averageRating || 0) },
+        ]);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to load dashboard stats", error);
+        }
+      }
+    }
+
+    loadStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div style={{ backgroundColor: COLORS.bg, ...bodyFont, color: COLORS.dark }} className="min-h-screen w-full overflow-x-hidden">
@@ -318,86 +306,7 @@ export default function CookCraftDashboard() {
       `}</style>
 
       {/* ---------------- Top Navbar ---------------- */}
-      <header
-        className="sticky top-0 z-50"
-        style={{ backgroundColor: "rgba(250,248,245,0.92)", backdropFilter: "blur(10px)", borderBottom: `1px solid ${COLORS.border}` }}
-      >
-        <div className="max-w-[1440px] mx-auto px-5 md:px-8 flex items-center justify-between h-18 py-3">
-          <div className="flex items-center gap-3">
-            <button className="lg:hidden" onClick={() => setSidebarOpen((v) => !v)} aria-label="Toggle menu">
-              {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
-                style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}
-              >
-                <ChefHat size={22} color="#fff" />
-              </div>
-              <span style={{ ...displayFont, color: COLORS.dark }} className="text-xl font-bold tracking-tight">
-                CookCraft
-              </span>
-            </div>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-8">
-            {TOP_NAV.map((link) => (
-              <button
-                key={link}
-                onClick={() => setActive(link)}
-                className="text-sm font-medium transition-colors duration-200"
-                style={{ color: active === link ? COLORS.primaryDark : COLORS.secondary, ...displayFont }}
-              >
-                {link}
-              </button>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <button
-              aria-label="Search"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-110"
-              style={{ backgroundColor: COLORS.cream }}
-            >
-              <Search size={18} color={COLORS.primaryDark} />
-            </button>
-            <button
-              aria-label="Notifications"
-              className="relative w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-110"
-              style={{ backgroundColor: COLORS.cream }}
-            >
-              <Bell size={18} color={COLORS.primaryDark} />
-              <span
-                className="absolute top-1.5 right-2 w-2 h-2 rounded-full"
-                style={{ backgroundColor: COLORS.roseText, border: `1.5px solid ${COLORS.cream}` }}
-              />
-            </button>
-            <div className="flex items-center gap-2 pl-1">
-              <div
-                className="w-10 h-10 rounded-full overflow-hidden border-2"
-                style={{ borderColor: COLORS.border }}
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&q=80&auto=format&fit=crop"
-                  alt="Admin avatar"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span style={{ ...displayFont, color: COLORS.dark }} className="hidden md:inline text-sm font-semibold">
-                {user?.name || "Chef Admin"}
-              </span>
-            </div>
-            <button
-              aria-label="Logout"
-              onClick={handleLogout}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-110"
-              style={{ backgroundColor: COLORS.cream }}
-            >
-              <SignOut size={18} color={COLORS.primaryDark} />
-            </button>
-          </div>
-        </div>
-      </header>
+      <AdminHeader active="Dashboard" />
 
       <div className="max-w-[1440px] mx-auto px-5 md:px-8 pt-8">
         {/* ---------------- Main content ---------------- */}
@@ -438,10 +347,11 @@ export default function CookCraftDashboard() {
                     <Plus size={16} weight="bold" /> Add Recipe
                   </button>
                   <button
+                    onClick={() => navigate("/admin/recipes")}
                     className="px-6 py-3 rounded-full text-sm font-semibold border transition-transform duration-200 hover:scale-105"
                     style={{ borderColor: COLORS.border, color: COLORS.dark, backgroundColor: COLORS.bg, ...displayFont }}
                   >
-                    View Reports
+                    View recipes
                   </button>
           </div>
         </div>
@@ -449,34 +359,25 @@ export default function CookCraftDashboard() {
         <div className="relative z-10 flex items-center justify-center h-[380px] md:h-[460px]">
           <div
             className="spin-slow absolute rounded-full"
-            style={{ width: 320, height: 320, border: `2px dashed ${COLORS.border}` }}
+            style={{ width: 320, height: 320 }}
           />
-          <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden shadow-xl border-8" style={{ borderColor: COLORS.card }}>
-            <img
-              src="https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800&q=80&auto=format&fit=crop"
-              alt="Featured dish of the day"
+          <div className="w-64 h-64 md:w-120 md:h-120 rounded-full overflow-hidden shadow-xl border-8" style={{ borderColor: COLORS.card }}>
+            <video
+              src={heroDishVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
               className="w-full h-full object-cover"
+              aria-label="Featured dish of the day"
             />
           </div>
-
-          {FLOATING_INGREDIENTS.map((ing, i) => (
-            <div
-              key={ing.label}
-              className={`absolute ${i % 2 === 0 ? "float-a" : "float-b"} hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl shadow-lg`}
-              style={{ top: ing.top, left: ing.left, backgroundColor: COLORS.card, animationDelay: ing.delay }}
-            >
-              <span className="text-lg">{ing.emoji}</span>
-              <span className="text-xs font-semibold" style={{ color: COLORS.dark, ...displayFont }}>
-                {ing.label}
-              </span>
-            </div>
-          ))}
         </div>
       </section>
 
           {/* ---------------- Statistics ---------------- */}
           <section ref={statsRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-            {STATS.map(({ label, value, Icon, tint, iconColor, spark, sparkColor, isDecimal }) => (
+            {stats.map(({ label, value, Icon, tint, iconColor, spark, sparkColor, isDecimal }) => (
               <div
                 key={label}
                 className="rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
@@ -500,86 +401,70 @@ export default function CookCraftDashboard() {
             ))}
           </section>
 
-          {/* ---------------- Quick Actions ---------------- */}
-          <section className="mb-10">
-            <SectionHeading title="Quick Actions" subtitle="Jump straight into your most common tasks." />
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
-              {QUICK_ACTIONS.map(({ label, desc, Icon }) => (
-                <button
-                  key={label}
-                  onClick={() => label === "Add Recipe" && navigate("/admin/add-recipe")}
-                  className="text-left rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{ backgroundColor: COLORS.card, border: `1px solid ${COLORS.border}` }}
-                >
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-                    style={{ backgroundImage: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})` }}
-                  >
-                    <Icon size={20} color="#fff" weight="bold" />
-                  </div>
-                  <h3 style={{ ...displayFont, color: COLORS.dark }} className="font-semibold text-sm mb-1.5">
-                    {label}
-                  </h3>
-                  <p style={{ color: COLORS.secondary }} className="text-xs leading-relaxed">
-                    {desc}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </section>
-
+          
           {/* ---------------- Latest Recipes ---------------- */}
           <section className="mb-10">
             <SectionHeading
               title="Latest Recipes"
-              subtitle="Newest submissions from the CookCraft community."
               action={
-                <button style={{ color: COLORS.primaryDark, ...displayFont }} className="text-sm font-semibold">
+                <button
+                  onClick={() => navigate("/admin/recipes")}
+                  style={{ color: COLORS.primaryDark, ...displayFont }}
+                  className="text-sm font-semibold"
+                >
                   View all
                 </button>
               }
             />
             <div className="rounded-3xl shadow-sm overflow-hidden" style={{ backgroundColor: COLORS.card, border: `1px solid ${COLORS.border}` }}>
-              {LATEST_RECIPES.map((r, i) => (
-                <div
-                  key={r.name}
-                  className="flex items-center gap-4 md:gap-6 px-5 md:px-7 py-5 flex-wrap"
-                  style={{ borderBottom: i !== LATEST_RECIPES.length - 1 ? `1px solid ${COLORS.border}` : "none" }}
-                >
-                  <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
-                    <img src={r.img} alt={r.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-[160px] flex-1">
-                    <h4 style={{ ...displayFont, color: COLORS.dark }} className="font-semibold text-sm mb-1">
-                      {r.name}
-                    </h4>
-                    <p style={{ color: COLORS.secondary }} className="text-xs">
-                      by {r.author}
-                    </p>
-                  </div>
-                  <span
-                    className="text-xs font-semibold px-3 py-1 rounded-full hidden sm:inline-block"
-                    style={{ backgroundColor: COLORS.cream, color: COLORS.primaryDark, ...displayFont }}
-                  >
-                    {r.category}
-                  </span>
-                  <span
-                    className="text-xs font-semibold px-3 py-1 rounded-full"
-                    style={{ backgroundColor: STATUS_STYLES[r.status].bg, color: STATUS_STYLES[r.status].color, ...displayFont }}
-                  >
-                    {r.status}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-semibold" style={{ color: COLORS.dark }}>
-                    <Star size={14} weight="fill" color={COLORS.primary} /> {r.rating}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs hidden md:flex" style={{ color: COLORS.secondary }}>
-                    <Clock size={13} /> {r.date}
-                  </span>
-                  <button aria-label="More options" className="p-2 rounded-full transition-colors duration-200" style={{ color: COLORS.secondary }}>
-                    <DotsVertical size={18} />
-                  </button>
-                </div>
-              ))}
+              {latestRecipes.length === 0 ? (
+                <p className="px-5 md:px-7 py-6 text-sm" style={{ color: COLORS.secondary }}>
+                  No recipes yet.
+                </p>
+              ) : (
+                latestRecipes.map((r, i) => {
+                  const status = r.isPublished === false ? "Draft" : "Published";
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => navigate(`/admin/edit-recipe/${r.id}`)}
+                      className="w-full flex items-center gap-4 md:gap-6 px-5 md:px-7 py-5 flex-wrap text-left"
+                      style={{ borderBottom: i !== latestRecipes.length - 1 ? `1px solid ${COLORS.border}` : "none" }}
+                    >
+                      <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0">
+                        <img src={r.images?.[0]?.url || foodPlaceholder} alt={r.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="min-w-[160px] flex-1">
+                        <h4 style={{ ...displayFont, color: COLORS.dark }} className="font-semibold text-sm mb-1">
+                          {r.title}
+                        </h4>
+
+                      </div>
+                      {r.category && (
+                        <span
+                          className="text-xs font-semibold px-3 py-1 rounded-full hidden sm:inline-block"
+                          style={{ backgroundColor: COLORS.cream, color: COLORS.primaryDark, ...displayFont }}
+                        >
+                          {r.category}
+                        </span>
+                      )}
+                      <span
+                        className="text-xs font-semibold px-3 py-1 rounded-full"
+                        style={{ backgroundColor: STATUS_STYLES[status].bg, color: STATUS_STYLES[status].color, ...displayFont }}
+                      >
+                        {status}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs hidden md:flex" style={{ color: COLORS.secondary }}>
+                        <Clock size={13} /> {formatDate(r.createdAt)}
+                      </span>
+                      <span aria-label="More options" className="p-2 rounded-full transition-colors duration-200" style={{ color: COLORS.secondary }}>
+                        <DotsVertical size={18} />
+                      </span>
+                    </button>
+                  );
+                })
+              )}
             </div>
           </section>
 
