@@ -1,30 +1,20 @@
+node_modules/
+.env
+.env.local
+
+dist/
+build/
+
 # Logs
-logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# SQLite database
+Backend/database/*.sqlite
+Backend/database/*.sqlite3
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-**/.env
-Backend/.env
-Backend/src/database/*.sqlite
+# Uploaded files
 Backend/uploads/*
 !Backend/uploads/.gitkeep
