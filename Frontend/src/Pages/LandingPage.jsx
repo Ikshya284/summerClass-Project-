@@ -100,7 +100,6 @@ export default function LandingPage() {
           </p>
           <div className="flex gap-5 mt-10">
             <button className="bg-[#F38D39] text-white px-8 py-4 rounded-full shadow hover:bg-[#e97c25]">Explore Recipes</button>
-            <button className="border-2 border-[#F38D39] text-[#F38D39] px-8 py-4 rounded-full hover:bg-[#F38D39] hover:text-white">Browse Categories</button>
           </div>
         </div>
 
