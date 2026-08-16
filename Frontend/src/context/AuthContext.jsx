@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { isValidEmail, validatePasswordStrong } from "../utils/validators";
 import { generateId } from "../utils/id";
 import { logActivity } from "../services/activityService";
@@ -128,6 +129,10 @@ export function AuthProvider({ children }) {
           console.error("Google redirect authentication failed:", error);
 
           if (!cancelled) {
+            toast.error(
+              error?.message ||
+                "Google sign-in didn't complete. Please try again."
+            );
             setLoading(false);
           }
 
