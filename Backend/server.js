@@ -12,33 +12,7 @@ const ingredientRoutes = require("./src/routes/ingredientRoutes");
 
 const app = express();
 
-/**
- * CORS allowlist.
- *
- * FRONTEND_URL can hold one or more comma-separated origins, e.g.
- *   FRONTEND_URL=https://cookcraft-frontend.onrender.com,http://localhost:5173
- *
- * Requests with no Origin header (curl, server-to-server, Postman) are
- * always allowed. We don't use cookies for auth (JWT is sent via the
- * Authorization header), so `credentials: true` is not needed here —
- * keeping it off means the browser will never block a request for
- * missing credentialed-CORS headers.
- */
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-  })
-);
+app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

@@ -2,12 +2,10 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyB-Oppj8U8t8o_jK1C8LX6TFL3a8EZ4gMY",
+  authDomain: "cookcraft-fae4d.firebaseapp.com",
+  projectId: "cookcraft-fae4d",
+  appId: "1:254068728789:web:e2c4aac0742d7f6152135c",
 };
 
 export const isFirebaseConfigured = Boolean(
